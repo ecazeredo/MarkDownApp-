@@ -335,6 +335,21 @@ async function loadFolder(path: string) {
   }
 }
 
+const FILE_ICON =
+  '<svg class="tree-icon file-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1h6L13 4.5V14a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/><path d="M9.5 1v3.5H13" fill="none" stroke="#fff" stroke-opacity=".6"/></svg>';
+const FOLDER_ICON =
+  '<svg class="tree-icon folder-icon closed" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h3.6l1.5 1.5h5.9A1.5 1.5 0 0 1 15 5v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5z" fill="currentColor"/></svg>' +
+  '<svg class="tree-icon folder-icon open" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h3.6l1.5 1.5h5.4A1.5 1.5 0 0 1 14.5 5v1H4.2a1.5 1.5 0 0 0-1.4 1L1 12z" fill="currentColor" opacity=".75"/><path d="M3.3 7.2A1 1 0 0 1 4.2 6.5h10.6a.7.7 0 0 1 .6 1l-2 5.8a1 1 0 0 1-.9.7H1.6a.6.6 0 0 1-.5-.8z" fill="currentColor"/></svg>';
+
+function treeLabel(icon: string, name: string): DocumentFragment {
+  const t = document.createElement("template");
+  t.innerHTML = icon;
+  const label = document.createElement("span");
+  label.textContent = name;
+  t.content.append(label);
+  return t.content;
+}
+
 function renderTree(nodes: FileNode[]) {
   if (nodes.length === 0) {
     const p = document.createElement("p");
@@ -350,14 +365,14 @@ function renderTree(nodes: FileNode[]) {
       if (node.children) {
         const details = document.createElement("details");
         const summary = document.createElement("summary");
-        summary.textContent = node.name;
+        summary.append(treeLabel(FOLDER_ICON, node.name));
         details.append(summary, build(node.children));
         li.append(details);
       } else {
         const a = document.createElement("a");
         a.href = "#";
         a.className = "tree-file";
-        a.textContent = node.name;
+        a.append(treeLabel(FILE_ICON, node.name));
         a.title = node.path;
         a.dataset.path = node.path;
         a.addEventListener("click", (e) => {
