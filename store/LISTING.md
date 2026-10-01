@@ -1,12 +1,12 @@
 # Microsoft Store listing for MarkDown++
 
-Copy each field into Partner Center > MarkDown++ > Store listings > English (United States).
+Copy each field into Partner Center > MarkDown++ Editor > Store listings > English (United States).
 
 ## Product name
-MarkDown++
+MarkDown++ Editor
 
 ## Description
-MarkDown++ is a simple, fast app for reading and writing Markdown files on Windows.
+MarkDown++ Editor is a simple, fast app for reading and writing Markdown files on Windows.
 
 Open a single file or a whole folder and see every Markdown file in it. Each file opens formatted and ready to read, with headings, lists, tables, links and code laid out clearly. Click anywhere and start typing to edit, just like a word processor, and your changes are saved as plain Markdown. Prefer the raw text? Switch to Source view at any time.
 

@@ -8,7 +8,7 @@
   <Identity Name="{{NAME}}" Publisher="{{PUBLISHER}}" Version="{{VERSION}}" ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>MarkDown++</DisplayName>
+    <DisplayName>{{DISPLAY_NAME}}</DisplayName>
     <PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -24,7 +24,7 @@
   <Applications>
     <Application Id="MarkDownPlusPlus" Executable="markdownpp.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="MarkDown++"
+        DisplayName="{{DISPLAY_NAME}}"
         Description="View, create and edit Markdown files"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"

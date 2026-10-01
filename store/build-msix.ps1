@@ -16,13 +16,14 @@ Copy-Item "$PSScriptRoot/assets/Square44x44Logo.png", "$PSScriptRoot/assets/Squa
   Replace("{{NAME}}", $identity.name).
   Replace("{{PUBLISHER}}", $identity.publisher).
   Replace("{{PUBLISHER_DISPLAY_NAME}}", $identity.publisherDisplayName).
+  Replace("{{DISPLAY_NAME}}", $identity.displayName).
   Replace("{{VERSION}}", $Version) | Set-Content "$layout/AppxManifest.xml" -Encoding utf8
 
 $makeappx = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\makeappx.exe" |
   Sort-Object FullName -Descending | Select-Object -First 1
 if (-not $makeappx) { throw "makeappx.exe not found; install the Windows SDK." }
 
-$out = Join-Path $root "out/MarkDownPlusPlus_$Version`_x64.msix"
+$out = Join-Path $root "out/MarkDownEditor_$Version`_x64.msix"
 & $makeappx.FullName pack /o /d $layout /p $out
 if ($LASTEXITCODE -ne 0) { throw "makeappx failed with exit code $LASTEXITCODE" }
 Write-Host "Created $out"

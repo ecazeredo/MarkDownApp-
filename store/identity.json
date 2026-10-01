@@ -1,6 +1,7 @@
 {
-  "_comment": "Values from Partner Center > MarkDown++ > Product identity. The placeholders build a test package only; the Store rejects it until they are replaced.",
-  "name": "MarkDownPlusPlus.TestOnly",
-  "publisher": "CN=00000000-0000-0000-0000-000000000000",
-  "publisherDisplayName": "ecazeredo"
+  "_comment": "Values from Partner Center > MarkDown++ Editor > Product identity.",
+  "name": "ECAzeredo.MarkDownEditor",
+  "publisher": "CN=E3F44DA7-8B07-4B58-897B-D93D4EB27BF0",
+  "publisherDisplayName": "ECAzeredo",
+  "displayName": "MarkDown++ Editor"
 }
