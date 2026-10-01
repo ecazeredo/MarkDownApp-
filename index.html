@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <title>MarkDown++</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="toolbar" role="toolbar" aria-label="Main toolbar">
+        <div class="toolbar-group">
+          <button id="btn-new" title="New file (Ctrl+N)" disabled>New</button>
+          <button id="btn-open-file" title="Open file (Ctrl+O)" disabled>Open File</button>
+          <button id="btn-open-folder" title="Open folder" disabled>Open Folder</button>
+          <button id="btn-save" title="Save (Ctrl+S)" disabled>Save</button>
+        </div>
+        <div class="toolbar-group" aria-label="Formatting">
+          <button class="fmt" title="Bold (Ctrl+B)" disabled><b>B</b></button>
+          <button class="fmt" title="Italic (Ctrl+I)" disabled><i>I</i></button>
+          <button class="fmt" title="Heading" disabled>H</button>
+          <button class="fmt" title="Bulleted list" disabled>&bull; List</button>
+          <button class="fmt" title="Link" disabled>Link</button>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <div class="view-switch" role="group" aria-label="View">
+          <button id="view-rendered" class="active" aria-pressed="true">Rendered</button>
+          <button id="view-source" aria-pressed="false">Source</button>
+        </div>
+      </header>
+
+      <nav class="tabs" role="tablist" aria-label="Open files">
+        <div class="tab active" role="tab" aria-selected="true">
+          <span class="tab-title">Welcome</span>
+        </div>
+      </nav>
+
+      <div class="workspace">
+        <aside class="sidebar" aria-label="Files">
+          <div class="sidebar-header">Files</div>
+          <p class="sidebar-empty">No folder open.</p>
+        </aside>
+
+        <main class="document">
+          <article id="rendered" class="rendered">
+            <h1>Welcome to MarkDown++</h1>
+            <p>This is the first preview of the app. The window layout is in place: the toolbar at the top, tabs for open files, the file list on the left, and the status bar at the bottom.</p>
+            <p>Opening files and folders arrives in the next step. Try the <b>Rendered</b> and <b>Source</b> switch at the top right to see both views.</p>
+          </article>
+          <pre id="source" class="source" hidden></pre>
+        </main>
+      </div>
+
+      <footer class="statusbar">
+        <span id="status-file">Welcome</span>
+        <span id="status-counts" title=""></span>
+      </footer>
+    </div>
+  </body>
+</html>
