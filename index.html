@@ -47,6 +47,7 @@
             <p class="sidebar-empty">No folder open.<br /><a href="#" id="link-open-folder">Open a folder</a> to see its Markdown files here.</p>
           </div>
         </aside>
+        <div id="splitter" class="splitter" role="separator" aria-orientation="vertical" title="Drag to resize. Double-click to reset."></div>
 
         <main id="document" class="document">
           <div id="empty-state" class="empty-state">
@@ -64,7 +65,10 @@
 
       <footer class="statusbar">
         <span id="status-file"></span>
-        <span id="status-counts" title=""></span>
+        <span class="status-right">
+          <span id="status-zoom" title="Text size. Click to reset (Ctrl+0)." hidden></span>
+          <span id="status-counts" title=""></span>
+        </span>
       </footer>
     </div>
   </body>

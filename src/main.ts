@@ -349,7 +349,6 @@ function renderTree(nodes: FileNode[]) {
       const li = document.createElement("li");
       if (node.children) {
         const details = document.createElement("details");
-        details.open = true;
         const summary = document.createElement("summary");
         summary.textContent = node.name;
         details.append(summary, build(node.children));
@@ -436,6 +435,84 @@ async function applyFormat(f: Format) {
   editor.format(f);
 }
 
+// ---------- Zoom and layout ----------
+
+const ZOOM_STEPS = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+const statusZoom = $("#status-zoom");
+let zoom = 1;
+
+function loadSetting(key: string): number | null {
+  try {
+    const v = Number(localStorage.getItem(key));
+    return Number.isFinite(v) && v > 0 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeSetting(key: string, value: number) {
+  try {
+    localStorage.setItem(key, String(value));
+  } catch {
+    // Settings are a convenience; ignore storage failures.
+  }
+}
+
+function setZoom(value: number) {
+  zoom = Math.min(ZOOM_STEPS[ZOOM_STEPS.length - 1], Math.max(ZOOM_STEPS[0], value));
+  document.documentElement.style.setProperty("--zoom", String(zoom));
+  statusZoom.textContent = `${Math.round(zoom * 100)}%`;
+  statusZoom.hidden = zoom === 1;
+  storeSetting("zoom", zoom);
+}
+
+function stepZoom(direction: 1 | -1) {
+  const i = ZOOM_STEPS.findIndex((z) => z >= zoom - 0.001);
+  const current = i < 0 ? ZOOM_STEPS.length - 1 : i;
+  const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, Math.max(0, current + direction))];
+  setZoom(next);
+}
+
+const splitter = $("#splitter");
+const SIDEBAR_DEFAULT = 260;
+
+function setSidebarWidth(px: number) {
+  const width = Math.round(Math.min(window.innerWidth * 0.6, Math.max(140, px)));
+  document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+  storeSetting("sidebarWidth", width);
+}
+
+splitter.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  splitter.setPointerCapture(e.pointerId);
+  splitter.classList.add("dragging");
+  document.body.classList.add("resizing");
+  const move = (ev: PointerEvent) => setSidebarWidth(ev.clientX);
+  const up = () => {
+    splitter.removeEventListener("pointermove", move);
+    splitter.classList.remove("dragging");
+    document.body.classList.remove("resizing");
+  };
+  splitter.addEventListener("pointermove", move);
+  splitter.addEventListener("pointerup", up, { once: true });
+});
+splitter.addEventListener("dblclick", () => setSidebarWidth(SIDEBAR_DEFAULT));
+statusZoom.addEventListener("click", () => setZoom(1));
+
+window.addEventListener(
+  "wheel",
+  (e) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    if (e.deltaY !== 0) stepZoom(e.deltaY < 0 ? 1 : -1);
+  },
+  { passive: false },
+);
+
+setZoom(loadSetting("zoom") ?? 1);
+const savedWidth = loadSetting("sidebarWidth");
+if (savedWidth) setSidebarWidth(savedWidth);
+
 // ---------- Wiring ----------
 
 $("#btn-new").addEventListener("click", newFile);
@@ -475,6 +552,9 @@ window.addEventListener(
     else if (key === "w" && activeTab) handled(() => closeTab(activeTab!));
     else if (key === "e") handled(() => showView(view === "rendered" ? "source" : "rendered"));
     else if (key === "tab") handled(() => cycleTab(e.shiftKey ? -1 : 1));
+    else if (key === "=" || key === "+") handled(() => stepZoom(1));
+    else if (key === "-" || key === "_") handled(() => stepZoom(-1));
+    else if (key === "0") handled(() => setZoom(1));
   },
   { capture: true },
 );
