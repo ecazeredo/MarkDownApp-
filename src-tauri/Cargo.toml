@@ -1,6 +1,6 @@
 [package]
 name = "markdownpp"
-version = "0.3.1"
+version = "1.0.0"
 description = "MarkDown++: view and edit Markdown files"
 authors = ["ecazeredo"]
 edition = "2021"

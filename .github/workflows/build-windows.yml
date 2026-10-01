@@ -40,3 +40,16 @@ jobs:
           name: MarkDownPlusPlus-Windows
           path: out/MarkDown++.exe
           if-no-files-found: error
+
+      - name: Package for the Microsoft Store
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version + ".0"
+          ./store/build-msix.ps1 -Version $version
+
+      - name: Upload Store package
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarkDownPlusPlus-Store-package
+          path: out/*.msix
+          if-no-files-found: error
