@@ -1,4 +1,4 @@
-name: Build Windows installer
+name: Build Windows app
 
 on:
   push:
@@ -25,12 +25,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build installer
-        run: npm run tauri build
+      - name: Build app
+        run: npm run tauri build -- --no-bundle
 
-      - name: Upload installer
+      - name: Rename EXE
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item src-tauri/target/release/markdownpp.exe "out/MarkDown++.exe"
+
+      - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: MarkDownPlusPlus-Windows-installer
-          path: src-tauri/target/release/bundle/nsis/*.exe
+          name: MarkDownPlusPlus-Windows
+          path: out/MarkDown++.exe
           if-no-files-found: error
