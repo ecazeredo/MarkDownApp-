@@ -58,13 +58,13 @@ Upload the four PNG files from the `store/screenshots` folder, in order. Caption
 `store/assets/StoreListingLogo300.png` (300 x 300)
 
 ## Privacy policy URL
-https://github.com/ecazeredo/MarkDownApp-/blob/HEAD/PRIVACY.md
+https://ecazeredo.github.io/MarkDownApp-/privacy.html
 
 ## Website
-https://github.com/ecazeredo/MarkDownApp-
+https://ecazeredo.github.io/MarkDownApp-/
 
 ## Support contact
-https://github.com/ecazeredo/MarkDownApp-/issues
+https://ecazeredo.github.io/MarkDownApp-/support.html
 
 ## Category
 Productivity
