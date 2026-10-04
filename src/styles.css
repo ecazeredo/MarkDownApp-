@@ -308,3 +308,47 @@ button.primary:hover:not(:disabled) { background: var(--accent); filter: brightn
 .status-right { display: flex; gap: 20px; }
 #status-counts { white-space: pre; }
 #status-zoom { cursor: pointer; }
+
+/* Right-click menu */
+.context-menu {
+  position: fixed;
+  z-index: 20;
+  min-width: 150px;
+  padding: 4px;
+  display: grid;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+}
+.context-menu button {
+  text-align: left;
+  border: 0;
+  background: none;
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.context-menu button:hover,
+.context-menu button:focus-visible { background: var(--bg-hover); outline: none; }
+
+/* Short confirmation, e.g. "Path copied" */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.toast.visible { opacity: 1; }

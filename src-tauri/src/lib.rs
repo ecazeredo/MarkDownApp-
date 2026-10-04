@@ -57,8 +57,12 @@ fn collect(dir: &Path, depth: usize) -> Vec<FileNode> {
 }
 
 #[tauri::command]
-fn list_markdown_files(dir: String) -> Vec<FileNode> {
-    collect(Path::new(&dir), 0)
+fn list_markdown_files(dir: String) -> Result<Vec<FileNode>, String> {
+    let path = Path::new(&dir);
+    if !path.is_dir() {
+        return Err("This folder does not exist.".into());
+    }
+    Ok(collect(path, 0))
 }
 
 #[tauri::command]

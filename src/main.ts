@@ -22,6 +22,10 @@ interface Tab {
   markdown: string;
   dirty: boolean;
   renderedEdited: boolean;
+  /** File contents as last read from or written to disk, to spot changes made by other programs. */
+  diskText: string | null;
+  /** True once we told the user the file is gone, so we don't ask again. */
+  missing: boolean;
   renderedStale: boolean;
   sourceStale: boolean;
   renderedHost: HTMLElement;
@@ -94,6 +98,8 @@ function createTab(path: string | null, markdown: string): Tab {
     markdown,
     dirty: false,
     renderedEdited: false,
+    diskText: path ? markdown : null,
+    missing: false,
     renderedStale: false,
     sourceStale: false,
     renderedHost,
@@ -148,6 +154,7 @@ async function activate(tab: Tab | null) {
   renderTabs();
   renderStatus();
   highlightTreeFile();
+  if (tab) void checkDisk(tab);
 }
 
 function markDirty(tab: Tab) {
@@ -249,6 +256,64 @@ function cycleTab(step: number) {
   void activate(tabs[i]);
 }
 
+// ---------- Changes made by other programs ----------
+
+let checkingDisk = false;
+
+/** Like Notepad++: if the file changed on disk since we last read or saved it, offer to reload it. */
+async function checkDisk(tab: Tab) {
+  if (!isTauri() || !tab.path || tab.diskText === null || checkingDisk || document.querySelector(".modal-overlay")) return;
+  checkingDisk = true;
+  try {
+    let text: string;
+    try {
+      text = await invoke<string>("read_text_file", { path: tab.path });
+    } catch {
+      if (!tab.missing) {
+        tab.missing = true;
+        markDirty(tab);
+        await choose(
+          "File not found",
+          `${tab.path}\n\nThis file was deleted, renamed or moved by another program. It stays open here; use Save to write it back.`,
+          ["OK"],
+        );
+      }
+      return;
+    }
+    tab.missing = false;
+    // Another dialog (e.g. "save changes?") opened meanwhile; check again later.
+    if (text === tab.diskText || document.querySelector(".modal-overlay")) return;
+    const warning = tab.dirty ? "\n\nYour unsaved changes here will be lost if you reload." : "";
+    const choice = await choose(
+      "File changed",
+      `${tab.path}\n\nThis file was changed by another program. Do you want to reload it?${warning}`,
+      ["Reload", "Keep this version"],
+    );
+    if (!tabs.includes(tab)) return;
+    tab.diskText = text;
+    if (choice === 0) {
+      reloadTab(tab, text);
+    } else {
+      markDirty(tab);
+    }
+  } finally {
+    checkingDisk = false;
+  }
+}
+
+function reloadTab(tab: Tab, text: string) {
+  tab.markdown = text;
+  tab.renderedEdited = false;
+  tab.dirty = false;
+  if (tab.rendered) tab.renderedStale = true;
+  if (tab.source) tab.sourceStale = true;
+  if (tab === activeTab) {
+    void ensureEditor(tab, view);
+  }
+  renderTabs();
+  renderStatus();
+}
+
 // ---------- Views ----------
 
 async function showView(v: View) {
@@ -321,17 +386,19 @@ async function openFolderDialog() {
   if (typeof picked === "string") await loadFolder(picked);
 }
 
-async function loadFolder(path: string) {
+async function loadFolder(path: string, quiet = false) {
   try {
     const nodes = await invoke<FileNode[]>("list_markdown_files", { dir: path });
     currentFolder = path;
+    storeText("lastFolder", path);
     folderName.textContent = baseName(path);
     folderName.title = path;
     btnRefresh.hidden = false;
     renderTree(nodes);
     renderStatus();
   } catch (err) {
-    await showError(`Could not open the folder ${path}.`, err);
+    if (quiet) storeText("lastFolder", null);
+    else await showError(`Could not open the folder ${path}.`, err);
   }
 }
 
@@ -366,6 +433,12 @@ function renderTree(nodes: FileNode[]) {
         const details = document.createElement("details");
         const summary = document.createElement("summary");
         summary.append(treeLabel(FOLDER_ICON, node.name));
+        summary.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          showContextMenu(e.clientX, e.clientY, [
+            { label: "Copy Path", action: () => copyText(node.path, "Path copied") },
+          ]);
+        });
         details.append(summary, build(node.children));
         li.append(details);
       } else {
@@ -379,6 +452,13 @@ function renderTree(nodes: FileNode[]) {
           e.preventDefault();
           void openPaths([node.path]);
         });
+        a.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          showContextMenu(e.clientX, e.clientY, [
+            { label: "Open", action: () => openPaths([node.path]) },
+            { label: "Copy Path", action: () => copyText(node.path, "Path copied") },
+          ]);
+        });
         li.append(a);
       }
       ul.append(li);
@@ -387,6 +467,80 @@ function renderTree(nodes: FileNode[]) {
   };
   fileTree.replaceChildren(build(nodes));
   highlightTreeFile();
+}
+
+// ---------- Right-click menu ----------
+
+interface MenuItem {
+  label: string;
+  action: () => unknown;
+}
+
+let openMenu: HTMLElement | null = null;
+
+function closeContextMenu() {
+  openMenu?.remove();
+  openMenu = null;
+}
+
+function showContextMenu(x: number, y: number, items: MenuItem[]) {
+  closeContextMenu();
+  const menu = document.createElement("div");
+  menu.className = "context-menu";
+  menu.setAttribute("role", "menu");
+  for (const item of items) {
+    const b = document.createElement("button");
+    b.setAttribute("role", "menuitem");
+    b.textContent = item.label;
+    b.addEventListener("click", () => {
+      closeContextMenu();
+      void item.action();
+    });
+    menu.append(b);
+  }
+  document.body.append(menu);
+  const { width, height } = menu.getBoundingClientRect();
+  menu.style.left = `${Math.min(x, window.innerWidth - width - 4)}px`;
+  menu.style.top = `${Math.min(y, window.innerHeight - height - 4)}px`;
+  openMenu = menu;
+  (menu.firstElementChild as HTMLElement | null)?.focus();
+}
+
+window.addEventListener("pointerdown", (e) => {
+  if (openMenu && !openMenu.contains(e.target as Node)) closeContextMenu();
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeContextMenu();
+});
+window.addEventListener("blur", closeContextMenu);
+
+async function copyText(text: string, confirmation: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const area = document.createElement("textarea");
+    area.value = text;
+    document.body.append(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+  showToast(confirmation);
+}
+
+let toastTimer: number | undefined;
+function showToast(message: string) {
+  let toast = document.querySelector<HTMLElement>(".toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.className = "toast";
+    toast.setAttribute("role", "status");
+    document.body.append(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add("visible");
+  clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => toast!.classList.remove("visible"), 1600);
 }
 
 function highlightTreeFile() {
@@ -417,6 +571,8 @@ async function saveTab(tab: Tab, saveAs: boolean): Promise<boolean> {
     return false;
   }
   const isNewLocation = path !== tab.path;
+  tab.diskText = tab.markdown;
+  tab.missing = false;
   tab.path = path;
   tab.name = baseName(path);
   tab.dirty = false;
@@ -470,6 +626,23 @@ function storeSetting(key: string, value: number) {
     localStorage.setItem(key, String(value));
   } catch {
     // Settings are a convenience; ignore storage failures.
+  }
+}
+
+function storeText(key: string, value: string | null) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    // Settings are a convenience; ignore storage failures.
+  }
+}
+
+function loadText(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
   }
 }
 
@@ -594,6 +767,13 @@ async function init() {
     if (files.length) await openPaths(files);
     else if (others.length === 1) await loadFolder(others[0]);
   });
+
+  await win.onFocusChanged(({ payload: focused }) => {
+    if (focused && activeTab) void checkDisk(activeTab);
+  });
+
+  const lastFolder = loadText("lastFolder");
+  if (lastFolder) await loadFolder(lastFolder, true);
 
   const startup = await invoke<string[]>("startup_files");
   if (startup.length) await openPaths(startup);
