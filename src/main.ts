@@ -3,6 +3,7 @@ import "@milkdown/kit/prose/tables/style/tables.css";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { countMarkdown, formatCounts } from "./counts";
 import { choose, promptText } from "./dialogs";
@@ -774,6 +775,9 @@ async function init() {
 
   const lastFolder = loadText("lastFolder");
   if (lastFolder) await loadFolder(lastFolder, true);
+
+  // Files double-clicked in File Explorer while the app is already running.
+  await listen<string[]>("open-files", (event) => void openPaths(event.payload));
 
   const startup = await invoke<string[]>("startup_files");
   if (startup.length) await openPaths(startup);

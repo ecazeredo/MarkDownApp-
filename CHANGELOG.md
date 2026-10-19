@@ -2,6 +2,11 @@
 
 All notable changes to MarkDown++ Editor, newest first.
 
+## 1.2.0 (October 19, 2026)
+
+### Changed
+- Only one MarkDown++ window runs at a time. Double-clicking a Markdown file in File Explorer while the app is open adds it as a new tab in that window and brings the window to the front, instead of starting a second copy of the app. A file that is already open switches to its tab.
+
 ## 1.1.0 (October 4, 2026)
 
 ### Added

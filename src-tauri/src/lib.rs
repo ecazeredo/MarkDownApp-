@@ -1,6 +1,7 @@
 use serde::Serialize;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use tauri::{Emitter, Manager};
 
 const MARKDOWN_EXTENSIONS: [&str; 3] = ["md", "markdown", "mdown"];
 const SKIPPED_DIRS: [&str; 3] = ["node_modules", "target", "$RECYCLE.BIN"];
@@ -80,9 +81,13 @@ fn write_text_file(path: String, contents: String) -> Result<(), String> {
 /// Markdown files passed on the command line, e.g. when a file is dropped on the EXE.
 #[tauri::command]
 fn startup_files() -> Vec<String> {
-    std::env::args()
-        .skip(1)
-        .map(PathBuf::from)
+    files_from_args(std::env::args().skip(1), &std::env::current_dir().unwrap_or_default())
+}
+
+/// Turns command-line arguments into absolute paths of existing files.
+fn files_from_args(args: impl IntoIterator<Item = String>, cwd: &Path) -> Vec<String> {
+    args.into_iter()
+        .map(|a| cwd.join(a))
         .filter(|p| p.is_file())
         .map(|p| p.to_string_lossy().into_owned())
         .collect()
@@ -91,6 +96,19 @@ fn startup_files() -> Vec<String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Must be registered first: a second launch (e.g. double-clicking a file in
+        // File Explorer) hands its files to the running window and exits.
+        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+            let files = files_from_args(args.into_iter().skip(1), Path::new(&cwd));
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+            if !files.is_empty() {
+                let _ = app.emit("open-files", files);
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
